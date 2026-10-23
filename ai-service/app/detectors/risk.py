@@ -20,11 +20,21 @@ DEMO_HIGH_RISK_HOSTS={
  'fake-kyc-example.invalid',
  'account-security-example.test',
 }
+DEMO_SMS_PATTERNS=[
+ (r'\b(?:bank|account).{0,80}\b(?:blocked|block).{0,40}\b(?:kyc|update|verify)\b', 'bank_kyc_fraud'),
+ (r'\b(?:parcel|delivery).{0,80}\b(?:hold|held).{0,40}\b(?:pay|payment|charges?|₹|rs\.?)\b', 'fake_parcel_sms'),
+ (r'\b(?:received|receive).{0,40}\b(?:₹|rs\.?\s*)?\s*5[,\s]?000\b.{0,80}\b(?:click|claim)\b', 'upi_payment_fraud'),
+ (r'\b(?:earn|income).{0,50}\b(?:daily|home|work from home).{0,80}\b(?:registration fee|fee|pay)\b', 'fake_job_offer'),
+ (r'\b(?:aadhaar|aadhar).{0,80}\b(?:illegal activity|arrest|police).{0,50}\b(?:pay|payment|immediately)\b', 'digital_arrest_fraud'),
+]
 def level(score): return 'Low' if score<25 else 'Medium' if score<50 else 'High' if score<75 else 'Critical'
 def result(scan_type,score,signals,explanation,actions,method='heuristic_rules'):
  score=max(0,min(100,int(score)));return {'scan_id':str(uuid.uuid4()),'scan_type':scan_type,'risk_score':score,'risk_level':level(score),'detection_method':method,'suspicious_indicators':signals,'explanation':explanation,'recommended_actions':actions,'confidence':0.55 if signals else 0.3,'model_version':'rules-baseline-0.1','provider_status':{'threat_intelligence':'not_configured','ml_model':'not_configured'},'created_at':datetime.now(timezone.utc).isoformat()}
 def analyze_text(text,scan_type='sms',context=''):
  text=(text or '').strip(); lower=text.lower(); signals=[]; score=0
+ for pattern,code in DEMO_SMS_PATTERNS:
+  if re.search(pattern,lower,re.I):
+   return result(scan_type,90,[{'code':code,'description':'This message matches a high-risk scam training example.','method':'heuristic'}],'This message matches a configured scam-training example involving urgency, payment pressure, account verification, or impersonation. Treat it as very dangerous and verify through an independently found official channel.',['Do not click links or send money.','Do not share OTPs, PINs, passwords, or identity details.','Contact the organization through its official app or website.'])
  for key,(pattern,description,weight) in SCAM_TERMS.items():
   if re.search(pattern,lower,re.I): signals.append({'code':key,'description':description,'method':'heuristic'}); score+=weight
  urls=re.findall(r'https?://[^\s<>"\']+',text,re.I)
