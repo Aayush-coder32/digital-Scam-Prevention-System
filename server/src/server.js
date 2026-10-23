@@ -1,6 +1,11 @@
 import 'dotenv/config';
+import dns from 'node:dns/promises';
 import app from './app.js';
 import mongoose from 'mongoose';
+
+// Use public DNS resolvers for MongoDB Atlas SRV/TXT discovery.
+dns.setServers(['1.1.1.1', '8.8.8.8']);
+mongoose.set('autoCreate', true);
 const port=Number(process.env.PORT||5000);
 const mongoUri=process.env.MONGODB_URI;
 
