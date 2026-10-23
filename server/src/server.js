@@ -1,4 +1,6 @@
 import 'dotenv/config';
+const dns = require("node:dns/promises");
+dns.setServers(["1.1.1.1","8.8.8.8"]);
 import app from './app.js';
 import mongoose from 'mongoose';
 const port=Number(process.env.PORT||5000);
