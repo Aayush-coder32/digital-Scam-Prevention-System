@@ -29,6 +29,11 @@ DEMO_SMS_PATTERNS=[
  (r'\b(?:aadhaar|aadhar).{0,80}\b(?:illegal activity|arrest|police).{0,50}\b(?:pay|payment|immediately)\b', 'digital_arrest_fraud'),
  (r'\b(?:won|win|winner|cashback|reward).{0,100}\b(?:claim|activate).{0,80}\b(?:upi|payment|details).{0,100}\b(?:forward|friends?|minutes?|click)\b', 'fake_cashback_whatsapp'),
 ]
+DEMO_QR_PATTERNS=[
+ (r'(?:reward|cashback|refund|claim|prize|winner|bonus)', 'qr_reward_or_refund'),
+ (r'(?:kyc|verify|verification|account.?security|blocked)', 'qr_account_verification'),
+ (r'(?:urgent|immediately|act.?now|limited.?time)', 'qr_urgency'),
+]
 def level(score): return 'Low' if score<25 else 'Medium' if score<50 else 'High' if score<75 else 'Critical'
 def result(scan_type,score,signals,explanation,actions,method='heuristic_rules'):
  score=max(0,min(100,int(score)));return {'scan_id':str(uuid.uuid4()),'scan_type':scan_type,'risk_score':score,'risk_level':level(score),'detection_method':method,'suspicious_indicators':signals,'explanation':explanation,'recommended_actions':actions,'confidence':0.55 if signals else 0.3,'model_version':'rules-baseline-0.1','provider_status':{'threat_intelligence':'not_configured','ml_model':'not_configured'},'created_at':datetime.now(timezone.utc).isoformat()}
@@ -68,10 +73,15 @@ def analyze_url(url):
  return result('url',score,signals,f'Parsed hostname: {host or "unavailable"}. The link was not opened; no reputation provider is configured.', ['Do not open unexpected links.','Confirm the domain with the organization through an official source.','HTTPS does not establish that a site is trustworthy.'])
 def analyze_qr(text):
  raw=(text or '').strip()
+ lower=unquote(raw).lower()
+ qr_signals=[{'code':code,'description':'QR payload contains language commonly used in scam payment requests.','method':'heuristic'} for pattern,code in DEMO_QR_PATTERNS if re.search(pattern,lower,re.I)]
+ if len(qr_signals)>=2:
+  return result('qr',90,qr_signals,'This QR payload contains multiple high-risk scam indicators such as reward, verification, or urgency language. No payment was initiated.',['Do not scan again or approve the payment.','Verify the recipient independently before paying.','Never share your UPI PIN or OTP.'])
  if raw.lower().startswith('upi://'):
-  p=urlparse(raw);q=parse_qs(p.query);payee=(q.get('pa')or[''])[0];name=(q.get('pn')or[''])[0];amount=(q.get('am')or[''])[0];signals=[];score=5
+  p=urlparse(raw);q=parse_qs(p.query);payee=(q.get('pa')or[''])[0];name=(q.get('pn')or[''])[0];amount=(q.get('am')or[''])[0];signals=qr_signals;score=5+len(signals)*25
   if not payee or '@' not in payee:signals.append({'code':'upi_id','description':'UPI payee identifier is missing or malformed.','method':'heuristic'});score+=35
   if amount and not re.fullmatch(r'\d+(\.\d{1,2})?',amount):signals.append({'code':'amount','description':'Payment amount format is malformed.','method':'heuristic'});score+=25
+  if amount and re.fullmatch(r'\d+(\.\d{1,2})?',amount) and float(amount)>=50000:signals.append({'code':'high_amount','description':'The QR requests an unusually high payment amount.','method':'heuristic'});score+=20
   return result('qr',score,signals,f'Decoded payment request: payee name={name or "not supplied"}; UPI ID={payee or "not supplied"}; amount={amount or "not specified"}. These details are not verified.', ['Compare the UPI ID and amount with the intended recipient before proceeding.','Never share your UPI PIN or OTP.','Decoding did not initiate a payment.'])
  if re.match(r'https?://',raw,re.I): r=analyze_url(raw);r['scan_type']='qr';r['explanation']='The QR content is a URL. '+r['explanation'];return r
  return result('qr',20,[{'code':'qr_content','description':'QR content is not a recognized UPI payment URI or URL.','method':'heuristic'}],'QR content was reviewed as plain data; no payment action was taken.',['Confirm the QR source with the intended recipient.','Do not enter a PIN or OTP after scanning an unexpected code.'])
