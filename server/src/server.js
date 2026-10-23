@@ -17,4 +17,4 @@ if(mongoUri){
   console.warn('MONGODB_URI is not set. Scanning works without persistence; account and history features are unavailable.');
 }
 
-app.listen(port,()=>console.log(`DSPS API listening on ${port}`));
+app.listen(port,()=>console.log(`DSPS API listening on ${port}`))r;
