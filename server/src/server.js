@@ -22,4 +22,28 @@ if(mongoUri){
   console.warn('MONGODB_URI is not set. Scanning works without persistence; account and history features are unavailable.');
 }
 
-app.listen(port,()=>console.log(`DSPS API listening on ${port}`));
+const server = app.listen(port,()=>console.log(`DSPS API listening on ${port}`));
+
+server.on('error',(error)=>{
+  if(error.code==='EADDRINUSE'){
+    console.error(`Port ${port} is already in use. Stop the other API process or set PORT to a different value.`);
+  }else{
+    console.error('API server failed to start:',error);
+  }
+  process.exitCode=1;
+});
+
+const shutdown=async(signal)=>{
+  server.close(async()=>{
+    await mongoose.disconnect().catch((error)=>console.error('MongoDB shutdown failed:',error.message));
+    process.exit(0);
+  });
+
+  setTimeout(()=>{
+    console.error(`Forced shutdown after receiving ${signal}.`);
+    process.exit(1);
+  },5000).unref();
+};
+
+process.once('SIGINT',()=>shutdown('SIGINT'));
+process.once('SIGTERM',()=>shutdown('SIGTERM'));

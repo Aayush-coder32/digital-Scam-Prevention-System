@@ -21,6 +21,8 @@ Prerequisites: Node.js 20+, Python 3.12+, and MongoDB 7 (optional for anonymous 
 3. In another terminal from repository root, run `npm install`, then `npm run dev`.
 4. Open `http://localhost:5173`. For local MongoDB, use `docker compose up mongo` or an existing MongoDB instance.
 
+If the API reports `EADDRINUSE` on port 5000 after a restart, stop the previous Node API process or set another port in `server/.env` (for example, `PORT=5001`) and update the client's API base URL accordingly.
+
 Or run API/database/AI with Docker Compose (`docker compose up --build`) and run the Vite client in a separate terminal. Set `JWT_ACCESS_SECRET` in your shell for anything beyond a throwaway local session.
 
 ## API
