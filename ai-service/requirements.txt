@@ -1,0 +1,11 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+pydantic>=2.10,<3
+scikit-learn>=1.6,<2
+pandas>=2.2,<3
+numpy>=2.2,<3
+Pillow>=11,<12
+opencv-python-headless>=4.10,<5
+python-multipart>=0.0.20,<1
+publicsuffix2>=2.20191221
+pytest>=8,<9
