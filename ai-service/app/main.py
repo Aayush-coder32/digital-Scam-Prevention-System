@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
 from app.detectors.risk import analyze_text, analyze_url, analyze_qr
 
@@ -22,3 +22,18 @@ def analyze(scan_type:str,payload:AnalysisInput):
  r=analyze_text(text,scan_type,payload.context or '')
  if scan_type=='impersonation' and payload.sender:r['explanation']+=f' Supplied sender details were considered as context: {payload.sender[:100]}.'
  return r
+@app.post('/analyze/qr-image')
+async def analyze_qr_image(file:UploadFile=File(...)):
+ if file.content_type not in ('image/png','image/jpeg','image/webp'):
+  raise HTTPException(415,'Upload a PNG, JPEG, or WebP image.')
+ content=await file.read(5*1024*1024+1)
+ if len(content)>5*1024*1024:raise HTTPException(413,'Image exceeds 5 MB.')
+ try:
+  import cv2, numpy as np
+  image=cv2.imdecode(np.frombuffer(content,dtype=np.uint8),cv2.IMREAD_COLOR)
+  if image is None:raise ValueError('invalid image')
+  data,_,_=cv2.QRCodeDetector().detectAndDecode(image)
+ except Exception:
+  raise HTTPException(400,'Image could not be decoded as a QR code.')
+ if not data:raise HTTPException(422,'No supported QR code was found in this image.')
+ return analyze_qr(data)
