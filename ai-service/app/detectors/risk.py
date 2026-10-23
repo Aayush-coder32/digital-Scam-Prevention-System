@@ -19,6 +19,7 @@ DEMO_HIGH_RISK_HOSTS={
  'free-cashback-example.test',
  'fake-kyc-example.invalid',
  'account-security-example.test',
+ 'reward-claim-example.test',
 }
 DEMO_SMS_PATTERNS=[
  (r'\b(?:bank|account).{0,80}\b(?:blocked|block).{0,40}\b(?:kyc|update|verify)\b', 'bank_kyc_fraud'),
@@ -26,6 +27,7 @@ DEMO_SMS_PATTERNS=[
  (r'\b(?:received|receive).{0,40}\b(?:₹|rs\.?\s*)?\s*5[,\s]?000\b.{0,80}\b(?:click|claim)\b', 'upi_payment_fraud'),
  (r'\b(?:earn|income).{0,50}\b(?:daily|home|work from home).{0,80}\b(?:registration fee|fee|pay)\b', 'fake_job_offer'),
  (r'\b(?:aadhaar|aadhar).{0,80}\b(?:illegal activity|arrest|police).{0,50}\b(?:pay|payment|immediately)\b', 'digital_arrest_fraud'),
+ (r'\b(?:won|win|winner|cashback|reward).{0,100}\b(?:claim|activate).{0,80}\b(?:upi|payment|details).{0,100}\b(?:forward|friends?|minutes?|click)\b', 'fake_cashback_whatsapp'),
 ]
 def level(score): return 'Low' if score<25 else 'Medium' if score<50 else 'High' if score<75 else 'Critical'
 def result(scan_type,score,signals,explanation,actions,method='heuristic_rules'):
