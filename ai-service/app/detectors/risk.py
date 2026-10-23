@@ -13,6 +13,13 @@ SCAM_TERMS={
  'remote':(r'\b(anydesk|teamviewer|remote access|screen share)\b','Request for remote access or screen sharing',25),
  'shortlink':(r'https?://(?:bit\.ly|tinyurl\.com|t\.co|rb\.gy|cutt\.ly|is\.gd)/\S+','Shortened URL hides its destination',15),
 }
+DEMO_HIGH_RISK_HOSTS={
+ 'bank-verify-example.test',
+ 'upi-refund-example.test',
+ 'free-cashback-example.test',
+ 'fake-kyc-example.invalid',
+ 'account-security-example.test',
+}
 def level(score): return 'Low' if score<25 else 'Medium' if score<50 else 'High' if score<75 else 'Critical'
 def result(scan_type,score,signals,explanation,actions,method='heuristic_rules'):
  score=max(0,min(100,int(score)));return {'scan_id':str(uuid.uuid4()),'scan_type':scan_type,'risk_score':score,'risk_level':level(score),'detection_method':method,'suspicious_indicators':signals,'explanation':explanation,'recommended_actions':actions,'confidence':0.55 if signals else 0.3,'model_version':'rules-baseline-0.1','provider_status':{'threat_intelligence':'not_configured','ml_model':'not_configured'},'created_at':datetime.now(timezone.utc).isoformat()}
@@ -32,6 +39,8 @@ def analyze_url(url):
  try: p=urlparse(candidate); host=p.hostname or ''; port=p.port
  except Exception: return result('url',60,[{'code':'malformed','description':'The URL could not be parsed safely.','method':'heuristic'}],'The URL format is malformed or ambiguous.',['Do not open the link. Verify the sender independently.'])
  signals=[];score=0
+ if host.lower().rstrip('.') in DEMO_HIGH_RISK_HOSTS:
+  return result('url',90,[{'code':'known_demo_scam_domain','description':'This demo domain is configured as a high-risk scam training example.','method':'heuristic'}],'This hostname matches a configured scam-training example associated with fake verification, refunds, cashback, KYC, or account-security requests. The link was not opened.',['Do not open the link or enter any information.','Verify the request through the organization’s official app or website.','Never share an OTP, PIN, password, or payment details.'])
  if p.scheme not in ('https','http'): signals.append({'code':'scheme','description':'Unexpected URL scheme.','method':'heuristic'});score+=25
  if not host or '.' not in host: signals.append({'code':'host','description':'Hostname is missing or unusual.','method':'heuristic'});score+=30
  try:
