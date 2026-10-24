@@ -8,6 +8,13 @@ An explainable, privacy-minded web application for reviewing digital scam signal
 
 [Features](#-features) · [How it works](#-how-it-works) · [Get started](#-get-started) · [API](#-api-at-a-glance) · [Security](#-security--privacy) · [Contributing](#-contributing) · [License](#-license)
 
+<br />
+
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000" alt="JavaScript" />
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=fff" alt="Python" />
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=fff" alt="HTML5" />
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=fff" alt="CSS3" />
+
 </div>
 
 ---
